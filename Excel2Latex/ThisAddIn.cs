@@ -11,8 +11,10 @@ namespace Excel2Latex
 {
     public partial class ThisAddIn
     {
+        private Excel.Application _application;
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            _application = Globals.ThisAddIn.Application;
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)
@@ -27,8 +29,8 @@ namespace Excel2Latex
         /// </summary>
         private void InternalStartup()
         {
-            this.Startup += new System.EventHandler(ThisAddIn_Startup);
-            this.Shutdown += new System.EventHandler(ThisAddIn_Shutdown);
+            Startup += ThisAddIn_Startup;
+            Shutdown += ThisAddIn_Shutdown;
         }
         
         #endregion
