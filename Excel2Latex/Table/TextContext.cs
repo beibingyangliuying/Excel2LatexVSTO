@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using static Excel2Latex.Utilities;
+using Excel2Latex.Extensions;
 using Excel = Microsoft.Office.Interop.Excel;
 
 namespace Excel2Latex.Table
 {
-    public struct TextContent
+    internal readonly struct TextContext
     {
         private static readonly CommandSequenceExpression Expression;
-        static TextContent()
+        static TextContext()
         {
             var bold = new BoldExpression();
             var italic = new ItalicExpression();
@@ -18,50 +18,57 @@ namespace Excel2Latex.Table
             var textColor = new TextColorExpression();
             Expression = new CommandSequenceExpression(textColor, bold, italic, underline, translate);
         }
-        public string Text;
-        public bool Bold;
-        public bool Italic;
-        public bool Underline;
-        public Tuple<int, int, int> TextColor;
+        private readonly ExcelAlignment _alignment;
+        public string Text { get; }
+        public bool Bold { get; }
+        public bool Italic { get; }
+        public bool Underline { get; }
+        public Tuple<int, int, int> TextColor { get; }
+        public TextContext(Excel.Range range)
+        {
+            Text = range.Text.Trim();
+            Bold = range.Font.Bold;
+            Italic = range.Font.Italic;
+            Underline = ((int)range.Font.Underline).IfUnderline();
+            TextColor = ((int)range.Font.Color).ToRgb();
+            _alignment = (ExcelAlignment)(int)range.HorizontalAlignment;
+        }
         public override string ToString()
         {
-            return Expression.Interpret(this);
+            return Text == "" ? "" : Expression.Interpret(this);
         }
-    }
-    internal class TextContents
-    {
-        public TextContent[,] Contents { get; }
-        public TextContents(Excel.Range range)
+        public ActualAlignment Alignment
         {
-            var m = range.Rows.Count;
-            var n = range.Columns.Count;
-
-            Contents = new TextContent[m, n];
-            for (var i = 0; i < m; i++)
+            get
             {
-                for (var j = 0; j < n; j++)
+                switch (_alignment)
                 {
-                    var cell = range.Item[i + 1, j + 1];
-                    Contents[i, j] = new TextContent
-                    {
-                        Text = cell.Text,
-                        Bold = cell.Font.Bold,
-                        Italic = cell.Font.Italic,
-                        Underline = IfUnderline(cell.Font.Underline),
-                        TextColor = Int2Rgb((int)cell.Font.Color)
-                    };
+                    case ExcelAlignment.Center:
+                        return ActualAlignment.C;
+                    case ExcelAlignment.Left:
+                        return ActualAlignment.L;
+                    case ExcelAlignment.Right:
+                        return ActualAlignment.R;
+                    case ExcelAlignment.General:
+                        if (double.TryParse(Text, out _) || DateTime.TryParse(Text, out _))
+                        {
+                            return ActualAlignment.R;
+                        }
+                        return ActualAlignment.L;
+                    default:
+                        return ActualAlignment.C;
                 }
             }
         }
     }
     internal abstract class AbstractExpression
     {
-        public abstract string Interpret(TextContent context);
+        public abstract string Interpret(TextContext context);
     }
-    internal class TextColorExpression : AbstractExpression
+    internal sealed class TextColorExpression : AbstractExpression
     {
         private static readonly Tuple<int, int, int> DefaultColor = new Tuple<int, int, int>(0, 0, 0);
-        public override string Interpret(TextContent context)
+        public override string Interpret(TextContext context)
         {
             var color = context.TextColor;
             if (Equals(color, DefaultColor))
@@ -72,28 +79,28 @@ namespace Excel2Latex.Table
             return $@"\textcolor[rgb]{{{r},{g},{b}}}";
         }
     }
-    internal class UnderlineExpression : AbstractExpression
+    internal sealed class UnderlineExpression : AbstractExpression
     {
-        public override string Interpret(TextContent context)
+        public override string Interpret(TextContext context)
         {
             return context.Underline ? @"\underline" : "";
         }
     }
-    internal class ItalicExpression : AbstractExpression
+    internal sealed class ItalicExpression : AbstractExpression
     {
-        public override string Interpret(TextContent context)
+        public override string Interpret(TextContext context)
         {
             return context.Italic ? @"\textit" : "";
         }
     }
-    internal class BoldExpression : AbstractExpression
+    internal sealed class BoldExpression : AbstractExpression
     {
-        public override string Interpret(TextContent context)
+        public override string Interpret(TextContext context)
         {
             return context.Bold ? @"\bold" : "";
         }
     }
-    internal class CommandSequenceExpression : AbstractExpression
+    internal sealed class CommandSequenceExpression : AbstractExpression
     {
         private const string Separator = "{";
         public List<AbstractExpression> Expressions { get; set; }
@@ -105,23 +112,24 @@ namespace Excel2Latex.Table
                 Expressions.Add(expression);
             }
         }
-        public override string Interpret(TextContent context)
+        public override string Interpret(TextContext context)
         {
             var resultList = Expressions.Select(expression => expression.Interpret(context)).Where(temp => temp != "").ToList();//返回空字符串则说明命令无需设置
             return string.Join(Separator, resultList) + new string('}', resultList.Count - 1);
         }
     }
-    internal class TranslateExpression : AbstractExpression
+    internal sealed class TranslateExpression : AbstractExpression
     {
         private static readonly Dictionary<string, string> EscapeDictionary = new Dictionary<string, string>
         {
             [@"\"] = @"\textbackslash{}",
             ["$"] = @"\$",
             ["^"] = @"\^",
-            ["_"] = @"\_"
+            ["_"] = @"\_",
+            ["#"] = @"\#"
         };
         public static bool TranslateRequired = true;
-        public override string Interpret(TextContent context)
+        public override string Interpret(TextContext context)
         {
             var text = context.Text;
             if (TranslateRequired)
