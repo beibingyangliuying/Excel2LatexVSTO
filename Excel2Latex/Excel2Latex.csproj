@@ -183,6 +183,7 @@
   <ItemGroup>
     <Compile Include="Builder\LatexDirector.cs" />
     <Compile Include="Builder\StandardTableBuilder.cs" />
+    <Compile Include="Extensions\BoolExtension.cs" />
     <Compile Include="Extensions\IntExtension.cs" />
     <Compile Include="Builder\LatexTableBuilder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">

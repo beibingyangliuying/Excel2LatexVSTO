@@ -35,7 +35,11 @@ namespace Excel2Latex.Table
         }
         public override string ToString()
         {
-            return Text == "" ? "" : Expression.Interpret(this);
+            return IsEmpty() ? "" : Expression.Interpret(this);
+        }
+        public bool IsEmpty()
+        {
+            return string.IsNullOrEmpty(Text);
         }
         public ActualAlignment Alignment
         {

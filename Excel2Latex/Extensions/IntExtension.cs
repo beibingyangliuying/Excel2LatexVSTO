@@ -2,7 +2,7 @@
 
 namespace Excel2Latex.Extensions
 {
-    public static class IntExtension
+    internal static class IntExtension
     {
         public static Tuple<int, int, int> ToRgb(this int number)
         {
