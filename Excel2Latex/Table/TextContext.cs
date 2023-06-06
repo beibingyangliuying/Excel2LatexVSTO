@@ -102,7 +102,7 @@ namespace Excel2Latex.Table
     {
         public override string Interpret(TextContext context)
         {
-            return context.Bold ? @"\bold" : "";
+            return context.Bold ? @"\textbf" : "";
         }
     }
     internal sealed class CommandSequenceExpression : AbstractExpression

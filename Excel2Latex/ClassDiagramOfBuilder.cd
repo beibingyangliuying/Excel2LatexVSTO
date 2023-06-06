@@ -13,14 +13,14 @@
   <Class Name="Excel2Latex.Builder.LatexTableBuilder">
     <Position X="2.25" Y="1.5" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAgAIAAEAgAAAAAUAgAAAEAAAAAAEAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAgEIAAEAgAAAAAUAgAAAEAAAAASEAAAAAAAAA=</HashCode>
       <FileName>Builder\LatexTableBuilder.cs</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="Excel2Latex.Builder.StandardTableBuilder">
-    <Position X="2.25" Y="5" Width="2.25" />
+    <Position X="2.25" Y="6.25" Width="2.25" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAIAAEAgAAAAAEAAAAAEAAAAAAEAAAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAgAIAAEAgAAAAAEAAAAAEAAAAAQEAAAAAAAAA=</HashCode>
       <FileName>Builder\StandardTableBuilder.cs</FileName>
     </TypeIdentifier>
   </Class>

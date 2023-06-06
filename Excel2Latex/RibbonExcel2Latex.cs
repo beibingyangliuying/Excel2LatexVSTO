@@ -16,7 +16,10 @@ namespace Excel2Latex
             var range = Globals.ThisAddIn.Application.Selection;
             var tableBuilder = new StandardTableBuilder(range,"caption","caption");
             var director = new LatexDirector(tableBuilder);
-            MessageBox.Show(director.Construct());
+
+            var form = new FormLatexBuilder();
+            form.SetResult(director.Construct());
+            form.ShowDialog();
         }
     }
 }
