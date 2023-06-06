@@ -7,19 +7,21 @@ using Index = Microsoft.Office.Interop.Excel.XlBordersIndex;
 
 namespace Excel2Latex.Table
 {
-    internal class Table
+    internal sealed class Table
     {
         public ActualAlignment[,] Alignments { get; }
         public bool[,] HorizontalBorders { get; }
         public bool[,] VerticalBorders { get; }
         public TextContext[,] TextContexts { get; }
-        public bool[,] MergeCells { get; }
+        public bool[,] MergeAreas { get; }
         public int RowCount { get; }
         public int ColumnCount { get; }
         public ActualAlignment[] HeadAlignments { get; }
         public bool[] HeadBorders { get; }
         public Table(Excel.Range range)
         {
+            #region 初始化属性
+
             RowCount = range.Rows.Count;
             ColumnCount = range.Columns.Count;
 
@@ -27,9 +29,11 @@ namespace Excel2Latex.Table
             HorizontalBorders = new bool[RowCount + 1, ColumnCount];
             VerticalBorders = new bool[RowCount, ColumnCount + 1];
             TextContexts = new TextContext[RowCount, ColumnCount];
-            MergeCells = new bool[RowCount, ColumnCount];
+            MergeAreas = new bool[RowCount, ColumnCount];
             HeadAlignments = new ActualAlignment[ColumnCount];
             HeadBorders = new bool[ColumnCount + 1];
+
+            #endregion
 
             for (var i = 0; i < RowCount; i++)
             {
@@ -45,7 +49,7 @@ namespace Excel2Latex.Table
 
                     #region 设置单元格对齐方式
 
-                    Alignments[i, j] = TextContexts[i,j].Alignment;
+                    Alignments[i, j] = TextContexts[i, j].Alignment;
 
                     #endregion
 
@@ -62,7 +66,7 @@ namespace Excel2Latex.Table
 
                     if ((bool)cell.MergeCells)
                     {
-                        MergeCells[i, j] = true;
+                        MergeAreas[i, j] = true;
                     }
 
                     #endregion
@@ -101,7 +105,7 @@ namespace Excel2Latex.Table
             for (var i = 0; i < RowCount; i++)
             {
                 alignments[i] = Alignments[i, columnNumber];
-            }
+            }//提取某一列
 
             HeadAlignments[columnNumber] = alignments.GroupBy(alignment => alignment)
                 .OrderByDescending(group => group.Count()).First().Key;
@@ -117,14 +121,14 @@ namespace Excel2Latex.Table
             HeadBorders[columnNumber] = result > RowCount / 2;
         }
         public Tuple<int, int> GetCellMergeArea(int rowNumber, int columnNumber)
-        {
-            var merge = MergeCells[rowNumber, columnNumber];
+        {//TODO：还没有验证该算法的正确性
+            var merge = MergeAreas[rowNumber, columnNumber];
             if (!merge)
             {
                 return new Tuple<int, int>(0, 0);
             }
 
-            if ((rowNumber > 0 && MergeCells[rowNumber - 1, columnNumber]) || (columnNumber > 0 && MergeCells[rowNumber, columnNumber - 1]))
+            if ((rowNumber > 0 && MergeAreas[rowNumber - 1, columnNumber]) || (columnNumber > 0 && MergeAreas[rowNumber, columnNumber - 1]))
             {
                 return new Tuple<int, int>(0, 0);
             }
@@ -134,7 +138,7 @@ namespace Excel2Latex.Table
             var upper = x;
             for (var i = 1; i < upper; i++)
             {
-                merge = MergeCells[rowNumber, columnNumber + i];
+                merge = MergeAreas[rowNumber, columnNumber + i];
                 if (merge) continue;
                 x = i;
                 break;
@@ -143,7 +147,7 @@ namespace Excel2Latex.Table
             upper = y;
             for (var i = 1; i < upper; i++)
             {
-                merge = MergeCells[rowNumber + i, columnNumber];
+                merge = MergeAreas[rowNumber + i, columnNumber];
                 if (merge) continue;
                 y = i;
                 break;

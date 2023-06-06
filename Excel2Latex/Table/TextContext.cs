@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Excel2Latex.Extensions;
 using Excel = Microsoft.Office.Interop.Excel;
 
@@ -55,10 +56,10 @@ namespace Excel2Latex.Table
                         return ActualAlignment.R;
                     case ExcelAlignment.General:
                         if (double.TryParse(Text, out _) || DateTime.TryParse(Text, out _))
-                        {
+                        {//数值型或日期型的数据默认居右对齐
                             return ActualAlignment.R;
                         }
-                        return ActualAlignment.L;
+                        return ActualAlignment.L;//文本型数据默认居左对齐
                     default:
                         return ActualAlignment.C;
                 }
@@ -106,49 +107,49 @@ namespace Excel2Latex.Table
     }
     internal sealed class CommandSequenceExpression : AbstractExpression
     {
-        private const string Separator = "{";
-        public List<AbstractExpression> Expressions { get; set; }
+        private AbstractExpression[] Expressions { get; }
         public CommandSequenceExpression(params AbstractExpression[] expressions)
         {
-            Expressions = new List<AbstractExpression>();
-            foreach (var expression in expressions)
-            {
-                Expressions.Add(expression);
-            }
+            Expressions = expressions;
         }
         public override string Interpret(TextContext context)
         {
-            var resultList = Expressions.Select(expression => expression.Interpret(context)).Where(temp => temp != "").ToList();//返回空字符串则说明命令无需设置
-            return string.Join(Separator, resultList) + new string('}', resultList.Count - 1);
+            var values = Expressions.Select(e => e.Interpret(context)).Where(s => s != "").ToList();//返回空字符串则说明命令无需设置
+            return string.Join("{", values) + new string('}', values.Count - 1);
         }
     }
     internal sealed class TranslateExpression : AbstractExpression
     {
-        private static readonly Dictionary<string, string> EscapeDictionary = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> NecessaryEscapeDictionary = new Dictionary<string, string>
+        {
+            ["#"] = @"\#",
+            ["%"] = @"\%"
+        };
+        private static readonly Dictionary<string, string> UnnecessaryEscapeDictionary = new Dictionary<string, string>
         {
             [@"\"] = @"\textbackslash{}",
             ["$"] = @"\$",
             ["^"] = @"\^",
-            ["_"] = @"\_",
-            ["#"] = @"\#"
+            ["_"] = @"\_"
         };
         public static bool TranslateRequired = true;
         public override string Interpret(TextContext context)
         {
-            var text = context.Text;
+            var builder = new StringBuilder(context.Text);
             if (TranslateRequired)
-            {
-                text = EscapeDictionary.Aggregate(text,
-                    (current, value) => current.Replace(value.Key, value.Value));//不确定顺序是否会产生影响
+            {//必须首先转换\字符
+                builder = UnnecessaryEscapeDictionary.Aggregate(builder,
+                    (b, pair) => b.Replace(pair.Key, pair.Value));
             }
 
-            text = text.Replace("%", @"\%");
-            if (text.Contains("\n"))
-            {
-                return @"\makecell{" + text.Replace("\n", @"\\") + "}";
-            }
+            builder = NecessaryEscapeDictionary.Aggregate(builder, (b, pair) => b.Replace(pair.Key, pair.Value));
 
-            return text;
+            if (!context.Text.Contains("\n")) return builder.ToString();
+
+            builder.Replace("\n", @"\\");
+            builder.Insert(0, @"\makecell{");
+            builder.Append("}");
+            return builder.ToString();
         }
     }
 }

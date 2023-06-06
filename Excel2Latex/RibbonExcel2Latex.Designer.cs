@@ -65,7 +65,7 @@
             // 
             this.buttonTransfer.Label = "选定区域并生成tex表格代码";
             this.buttonTransfer.Name = "buttonTransfer";
-            this.buttonTransfer.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.buttonTransfer_Click);
+            this.buttonTransfer.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.ButtonTransfer_Click);
             // 
             // RibbonExcel2Latex
             // 

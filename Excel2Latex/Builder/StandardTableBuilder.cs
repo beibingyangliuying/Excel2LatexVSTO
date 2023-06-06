@@ -8,7 +8,7 @@ namespace Excel2Latex.Builder
 {
     internal sealed class StandardTableBuilder : LatexTableBuilder
     {
-        public StandardTableBuilder(Excel.Range range) : base(range)
+        public StandardTableBuilder(Excel.Range range, string caption, string label) : base(range, caption, label)
         {
         }
         public override void StartTableEnvironment()
@@ -79,11 +79,11 @@ namespace Excel2Latex.Builder
             for (var i = 0; i < Table.ColumnCount; i++)
             {
                 var textContext = Table.TextContexts[rowNumber, i];
-                if (textContext.IsEmpty())
-                {
-                    builder.Append("&");
-                    continue;
-                }
+                //if (textContext.IsEmpty())
+                //{
+                //    builder.Append("&");
+                //    continue;
+                //}
 
                 var text = new StringBuilder(textContext.ToString());
 
@@ -118,10 +118,21 @@ namespace Excel2Latex.Builder
             builder.AppendLine(@"\bigstrut \\");
             Builder.Append(builder);
         }
+        public override void BuildCaption()
+        {
+            Builder.AppendLine($"\t\\caption{{{Caption}}}");
+        }
+        public override void BuildLabel()
+        {
+            Builder.AppendLine($"\t\\label{{tab:{Label}}}");
+        }
         public override string GetResult()
         {
             StartTableEnvironment();
             StartTabularEnvironment();
+
+            BuildCaption();
+            BuildLabel();
 
             BuildHorizontalLine(0);
             for (var i = 0; i < Table.RowCount; i++)

@@ -1,9 +1,4 @@
 ﻿using Microsoft.Office.Tools.Ribbon;
-using Excel = Microsoft.Office.Interop.Excel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Windows.Forms;
 using Excel2Latex.Builder;
 
@@ -16,10 +11,10 @@ namespace Excel2Latex
 
         }
 
-        private void buttonTransfer_Click(object sender, RibbonControlEventArgs e)
+        private void ButtonTransfer_Click(object sender, RibbonControlEventArgs e)
         {
             var range = Globals.ThisAddIn.Application.Selection;
-            var tableBuilder = new StandardTableBuilder(range);
+            var tableBuilder = new StandardTableBuilder(range,"caption","caption");
             var director = new LatexDirector(tableBuilder);
             MessageBox.Show(director.Construct());
         }
